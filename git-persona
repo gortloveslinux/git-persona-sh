@@ -1,12 +1,11 @@
 #!/bin/sh
-
 PERSONA_PATTERN="s|^persona\.\(.*\) \(.* .*\) <\(.*\)>$|"
 
 function install () {
   TEMPLATE_DIR=~/.git/templates
   HOOK_TEMPLATE_DIR=$TEMPLATE_DIR/hooks
   HOOK_FILE=$HOOK_TEMPLATE_DIR/pre-commit
-  COMMAND="git-persona -c"
+  COMMAND="git-persona check"
   LOCAL_HOOK_FILE="$(git rev-parse --show-toplevel)/.git/hooks/pre-commit"
 
   mkdir -p $HOOK_TEMPLATE_DIR
@@ -62,15 +61,29 @@ function check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
   echo "Check Username"
+  if [ -z "$USER_NAME ] || [ -z "$USER_EMAIL"]; then
+    echo "It seems you\'re missing either user.name or user.email in your local config"
+    list_persona
+    echo "Enter the persona name you would like to use for this repository: "
+    read PERSONA
+    set_persona $PERSONA
+  fi
 }
 
-if [ "$1" = "install" ]; then
-  install
+if [ "$#" -eq 0 ]; then
+  list_persona
   exit 0
-elif [ "$1" = "check" ]; then
-  check_username
-  exit 0
+elif [ "$#" -eq 1 ]; then
+  if [ "$1" = "install" ]; then
+    install
+    exit 0
+  elif [ "$1" = "check" ]; then
+    check_username
+    exit 0
+  else
+    set_persona $1
+    exit 0
+  fi
 else
-  set_persona $1
-  exit 0
+  echo "Too many arguments" #TODO
 fi
