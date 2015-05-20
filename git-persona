@@ -11,14 +11,14 @@ function install () {
   mkdir -p $HOOK_TEMPLATE_DIR
 
   if [ -e $HOOK_FILE ]; then
-    grep -q $COMMAND $HOOK_FILE || echo $COMMAND >> $HOOK_FILE
+    grep -q "$COMMAND" $HOOK_FILE || echo $COMMAND >> $HOOK_FILE
   else
-    echo $COMMAND >> $HOOK_FILE
+    echo "$COMMAND" >> $HOOK_FILE
     chmod +x $HOOK_FILE
   fi
 
   if [ -e $LOCAL_HOOK_FILE ]; then
-    grep -q $COMMAND $LOCAL_HOOK_FILE || echo $COMMAND >> $LOCAL_HOOK_FILE
+    grep -q "$COMMAND" $LOCAL_HOOK_FILE || echo "$COMMAND" >> $LOCAL_HOOK_FILE
   fi
   git config --global init.templatedir $TEMPLATE_DIR
   git init
@@ -61,8 +61,8 @@ function check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
   echo "Check Username"
-  if [ -z "$USER_NAME ] || [ -z "$USER_EMAIL"]; then
-    echo "It seems you\'re missing either user.name or user.email in your local config"
+  if [ -z "$USER_NAME"] || [ -z "$USER_EMAIL"]; then
+    echo "It seems you're missing either user.name or user.email in your local config"
     list_persona
     echo "Enter the persona name you would like to use for this repository: "
     read PERSONA
