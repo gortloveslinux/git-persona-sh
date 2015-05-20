@@ -7,19 +7,29 @@ function install () {
   HOOK_TEMPLATE_DIR=$TEMPLATE_DIR/hooks
   HOOK_FILE=$HOOK_TEMPLATE_DIR/pre-commit
   COMMAND="git-persona -c"
-  mkdir -p $HOOK_TEMPLATE_DIR && cd $_
+  LOCAL_HOOK_FILE="$(git rev-parse --show-toplevel)/.git/hooks/pre-commit"
+
+  mkdir -p $HOOK_TEMPLATE_DIR
+
   if [ -e $HOOK_FILE ]; then
     grep -q $COMMAND $HOOK_FILE || echo $COMMAND >> $HOOK_FILE
   else
     echo $COMMAND >> $HOOK_FILE
+    chmod +x $HOOK_FILE
+  fi
+
+  if [ -e $LOCAL_HOOK_FILE ]; then
+    grep -q $COMMAND $LOCAL_HOOK_FILE || echo $COMMAND >> $LOCAL_HOOK_FILE
   fi
   git config --global init.templatedir $TEMPLATE_DIR
+  git init
 }
 
 function list_persona () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
   PERSONA_LIST=$(git config --global --get-regex ^persona\\. | grep -e "^persona.*$")
+
   while read -r line; do
       PERSONA=$(sed -n "$PERSONA_PATTERN\\1|p" <<< $line)
       PERSONA_NAME=$(sed -n "$PERSONA_PATTERN\\2|p" <<< $line)
@@ -35,6 +45,7 @@ function list_persona () {
 
 function set_persona () {
   PERSONA=$(git config --global --get-regex ^persona\\. | grep -e "^persona.$1")
+
   if [ -n "$PERSONA" ]; then
     PERSONA_NAME=$(sed -n "$PERSONA_PATTERN\\2|p" <<< $PERSONA)
     PERSONA_EMAIL=$(sed -n "$PERSONA_PATTERN\\3|p" <<< $PERSONA)
@@ -43,15 +54,23 @@ function set_persona () {
   else
     echo "$1 is not a persona"
   fi
+
   list_persona
 }
 
 function check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
+  echo "Check Username"
 }
 
-# set_persona funky
-install
-
-
+if [ "$1" = "install" ]; then
+  install
+  exit 0
+elif [ "$1" = "check" ]; then
+  check_username
+  exit 0
+else
+  set_persona $1
+  exit 0
+fi
