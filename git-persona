@@ -29,45 +29,55 @@ list_persona () {
   USER_EMAIL=$(git config --local --get user.email)
   PERSONA_LIST=$(git config --global --get-regex ^persona\\. | grep -e "^persona.*$")
 
-  while read -r line; do
-      PERSONA=$(sed -n "$PERSONA_PATTERN\\1|p" <<< $line)
-      PERSONA_NAME=$(sed -n "$PERSONA_PATTERN\\2|p" <<< $line)
-      PERSONA_EMAIL=$(sed -n "$PERSONA_PATTERN\\3|p" <<< $line)
-      if [ "$USER_NAME" = "$PERSONA_NAME" ] && [ "$USER_EMAIL" =  "$PERSONA_EMAIL" ]; then
+  NUMBER=1
+  echo "$PERSONA_LIST" | while read -r line; do
+      PERSONA=$(echo "$line" | sed -n "$PERSONA_PATTERN\\1|p")
+      PERSONA_NAME=$(echo "$line" | sed -n "$PERSONA_PATTERN\\2|p")
+      PERSONA_EMAIL=$(echo "$line" | sed -n "$PERSONA_PATTERN\\3|p")
+
+      if [ "$USER_NAME" = "$PERSONA_NAME" ] && [ "$USER_EMAIL" = "$PERSONA_EMAIL" ]; then
         USING='*'
       else
-        USING=" "
+        USING=' '
       fi
-     echo "\t $USING $PERSONA - NAME: $PERSONA_NAME EMAIL: <$PERSONA_EMAIL>"
-  done <<< "$PERSONA_LIST"
+      if [ "$#" -eq 1 ]; then
+        NUMBERING="$NUMBER) "
+      else
+        NUMBERING=""
+      fi
+      printf ' %s%s %s - NAME: %s EMAIL: <%s>\n' "$NUMBERING" "$USING" "$PERSONA" "$PERSONA_NAME" "$PERSONA_EMAIL"
+      NUMBER=`expr $NUMBER + 1`
+  done
 }
 
 set_persona () {
-  PERSONA=$(git config --global --get-regex ^persona\\. | grep -e "^persona.$1")
+  if [ -n "$1" ]; then
+    PERSONA=$(git config --global --get-regex ^persona\\. | grep -e "^persona.$1")
 
-  if [ -n "$PERSONA" ]; then
-    PERSONA_NAME=$(sed -n "$PERSONA_PATTERN\\2|p" <<< $PERSONA)
-    PERSONA_EMAIL=$(sed -n "$PERSONA_PATTERN\\3|p" <<< $PERSONA)
-    git config --local user.name "$PERSONA_NAME"
-    git config --local user.email "$PERSONA_EMAIL"
-  else
-    echo "$1 is not a persona"
+    if [ -n "$PERSONA" ]; then
+      PERSONA_NAME=$(echo "$PERSONA" | sed -n "$PERSONA_PATTERN\\2|p")
+      PERSONA_EMAIL=$(echo "$PERSONA" | sed -n "$PERSONA_PATTERN\\3|p")
+      git config --local user.name "$PERSONA_NAME"
+      git config --local user.email "$PERSONA_EMAIL"
+    else
+      printf "%s is not a persona\n" "$1"
+    fi
+    list_persona "number"
   fi
-
-  list_persona
 }
 
 check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
+
   if [ -z "$USER_NAME" ] || [ -z "$USER_EMAIL" ]; then
-    echo "It seems you're missing either user.name or user.email in your local config"
-    echo "Select the persona name you would like to use for this repository: "
+    PERSONAS=$(list_persona "number")
+    printf "Select the persona you would like to use for this repository\n%s\n" "$PERSONAS"
+    printf "> "
     exec < /dev/tty
-    select persona in $(git config --global --get-regex ^persona\\. | grep -e "^persona.*$" | sed -n "$PERSONA_PATTERN\\1|p"); do
-      set_persona $persona
-      break
-    done
+    read SELECT
+    PERSONA=$(echo "$PERSONAS" | sed -n "s|$SELECT) [ \*] \([a-zA-Z]*\) .*$|\\1|p")
+    set_persona $PERSONA
   fi
 }
 
@@ -86,5 +96,5 @@ elif [ "$#" -eq 1 ]; then
     exit 0
   fi
 else
-  echo "Too many arguments" #TODO
+  echo "Too many arguments" #TODO Better messeging
 fi
