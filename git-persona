@@ -60,7 +60,6 @@ function set_persona () {
 function check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
-  echo "Check Username"
   if [ -z "$USER_NAME" ] || [ -z "$USER_EMAIL" ]; then
     echo "It seems you're missing either user.name or user.email in your local config"
     list_persona
