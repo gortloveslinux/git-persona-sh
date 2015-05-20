@@ -63,6 +63,7 @@ function check_username () {
   if [ -z "$USER_NAME" ] || [ -z "$USER_EMAIL" ]; then
     echo "It seems you're missing either user.name or user.email in your local config"
     echo "Select the persona name you would like to use for this repository: "
+    exec < /dev/tty
     select persona in $(git config --global --get-regex ^persona\\. | grep -e "^persona.*$" | sed -n "$PERSONA_PATTERN\\1|p"); do
       set_persona $persona
       break
