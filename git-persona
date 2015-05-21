@@ -1,7 +1,7 @@
 #!/bin/sh
 PERSONA_PATTERN="s|^persona\.\(.*\) \(.* .*\) <\(.*\)>$|"
 
-function install () {
+install () {
   TEMPLATE_DIR=~/.git/templates
   HOOK_TEMPLATE_DIR=$TEMPLATE_DIR/hooks
   HOOK_FILE=$HOOK_TEMPLATE_DIR/pre-commit
@@ -24,7 +24,7 @@ function install () {
   git init
 }
 
-function list_persona () {
+list_persona () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
   PERSONA_LIST=$(git config --global --get-regex ^persona\\. | grep -e "^persona.*$")
@@ -42,7 +42,7 @@ function list_persona () {
   done <<< "$PERSONA_LIST"
 }
 
-function set_persona () {
+set_persona () {
   PERSONA=$(git config --global --get-regex ^persona\\. | grep -e "^persona.$1")
 
   if [ -n "$PERSONA" ]; then
@@ -57,7 +57,7 @@ function set_persona () {
   list_persona
 }
 
-function check_username () {
+check_username () {
   USER_NAME=$(git config --local --get user.name)
   USER_EMAIL=$(git config --local --get user.email)
   if [ -z "$USER_NAME" ] || [ -z "$USER_EMAIL" ]; then
